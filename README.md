@@ -101,3 +101,13 @@ git pull --ff-only
 ```
 
 更新后按 OpenClaw 当前版本的方式重新加载 Skills。
+
+## Daily 17:00 digest
+
+The skill includes an idempotent installer for a persistent OpenClaw cron job. Run it once after installing the skill into the existing bot:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1
+```
+
+It schedules `scripts/daily_digest.py` for 17:00 in `Asia/Shanghai` and announces the current day's completed PV Radar report through the bot's existing delivery route. To target a specific Feishu group, pass `-Channel feishu -To "<chat_id>"`.

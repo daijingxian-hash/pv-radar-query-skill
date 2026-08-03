@@ -32,3 +32,15 @@ $env:PV_RADAR_BASE_URL = "http://host:8787"
 - Do not expose endpoint details, raw JSON, database fields, models, API keys, or internal prompts.
 
 Read [references/evidence.md](references/evidence.md) only when field interpretation is needed.
+
+## Daily 17:00 digest
+
+After installing this Skill into the existing OpenClaw/Feishu bot, configure the persistent daily digest job once:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1
+```
+
+The job runs at 17:00 in `Asia/Shanghai`, reads the current day's completed Radar report, and announces the formatted digest through the existing bot route. If the bot uses a specific Feishu group, pass `-Channel feishu -To "<chat_id>"`. Keep the existing bot session and memory; this Skill must not start a replacement WebSocket bot or create a second conversation.
+
+The installer is idempotent and will not create a duplicate job with the same name. Read [references/daily_digest.md](references/daily_digest.md) for the delivery behavior and troubleshooting notes.
