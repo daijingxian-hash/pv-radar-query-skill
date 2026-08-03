@@ -17,7 +17,12 @@ if (-not (Get-Command openclaw -ErrorAction SilentlyContinue)) {
 $existing = @()
 try {
     $raw = (& openclaw cron list --json 2>$null | Out-String).Trim()
-    if ($raw) { $parsed = $raw | ConvertFrom-Json; $existing = @($parsed.jobs) }
+    if ($raw) {
+        $parsed = $raw | ConvertFrom-Json
+        if ($parsed -is [array]) { $existing = @($parsed) }
+        elseif ($parsed.jobs) { $existing = @($parsed.jobs) }
+        else { $existing = @($parsed) }
+    }
 } catch { }
 if ($existing | Where-Object { $_.name -eq $jobName }) {
     Write-Output "日报定时任务已存在：$jobName"
@@ -26,7 +31,7 @@ if ($existing | Where-Object { $_.name -eq $jobName }) {
 
 $command = "python scripts/daily_digest.py --base-url `"$BaseUrl`""
 $args = @(
-    "cron", "create", "0 17 * * *",
+    "cron", "add", "0 17 * * *",
     "--name", $jobName,
     "--command", $command,
     "--command-cwd", $skillRoot,

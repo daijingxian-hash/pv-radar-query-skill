@@ -35,7 +35,23 @@ Read [references/evidence.md](references/evidence.md) only when field interpreta
 
 ## Daily 17:00 digest
 
-After installing this Skill into the existing OpenClaw/Feishu bot, create the persistent digest job once:
+### First activation behavior
+
+When this Skill is first activated in an existing OpenClaw bot, check whether a job named `PV Radar 每日17:00日报` already exists. If the host exposes cron mutation with operator permission, create it automatically from the current private conversation using the equivalent of:
+
+```powershell
+openclaw cron add "0 17 * * *" `
+  --name "PV Radar 每日17:00日报" `
+  --command "python scripts/daily_digest.py --base-url http://172.26.198.15:8787" `
+  --command-cwd "<skill-root>" `
+  --session isolated `
+  --announce `
+  --tz "Asia/Shanghai"
+```
+
+Omit `--channel` and `--to` for the default behavior: OpenClaw preserves the current private-chat delivery route when an isolated job is created from that active conversation. If the user later supplies a Feishu `chat_id`, update the job with explicit `--channel feishu --to "<chat_id>"`, or create an additional job for that group. Do not put a user's `chat_id`, App ID, App Secret, or token in this public Skill repository.
+
+If the host does not grant cron mutation to the bot, explain that one-time setup is required and provide the bundled installer:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1
@@ -70,4 +86,4 @@ powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1 `
   -BaseUrl "http://host:8787"
 ```
 
-This workflow supplements the original bot. It must not create a replacement bot, start a second Feishu WebSocket, replace the bot's prompt, or clear/replace its conversation memory.
+This workflow supplements the original bot. It must not create a replacement bot, start a second Feishu WebSocket, replace the bot's prompt, or clear/replace its conversation memory. Creating the schedule is the only automatic external-side-effect allowed during first activation; sending the first digest waits for the scheduled 17:00 run.
