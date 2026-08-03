@@ -35,12 +35,39 @@ Read [references/evidence.md](references/evidence.md) only when field interpreta
 
 ## Daily 17:00 digest
 
-After installing this Skill into the existing OpenClaw/Feishu bot, configure the persistent daily digest job once:
+After installing this Skill into the existing OpenClaw/Feishu bot, create the persistent digest job once:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1
 ```
 
-The job runs at 17:00 in `Asia/Shanghai`, reads the current day's completed Radar report, and announces the formatted digest through the existing bot route. If the bot uses a specific Feishu group, pass `-Channel feishu -To "<chat_id>"`. Keep the existing bot session and memory; this Skill must not start a replacement WebSocket bot or create a second conversation.
+The installer creates a job named `PV Radar 每日17:00日报` with this schedule:
 
-The installer is idempotent and will not create a duplicate job with the same name. Read [references/daily_digest.md](references/daily_digest.md) for the delivery behavior and troubleshooting notes.
+```text
+0 17 * * *    Asia/Shanghai
+```
+
+The job runs `scripts/daily_digest.py`, then uses OpenClaw `--announce` to send the script output through the existing bot delivery route. For a specific Feishu group, pass its existing route explicitly:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1 `
+  -Channel feishu `
+  -To "<chat_id>"
+```
+
+`daily_digest.py` follows this fixed flow:
+
+1. Read the current Shanghai calendar date.
+2. Read the current day's completed Radar report.
+3. If today's report does not exist, ask Radar to generate that date's report once.
+4. Format at most five selected materials with title, game, confirmed developer/publisher, evaluation, highlight, and original URL.
+5. Announce the formatted Chinese digest. If no completed report is available, announce that there is no report instead of sending an older date's report.
+
+The installer is idempotent: rerunning it checks the existing OpenClaw cron list and does not create a duplicate job with the same name. `openclaw` must be available in PATH, the host must be able to reach `PV_RADAR_BASE_URL`, and Python's standard library is sufficient for the digest script. Override the Radar endpoint when needed:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\install_daily_digest.ps1 `
+  -BaseUrl "http://host:8787"
+```
+
+This workflow supplements the original bot. It must not create a replacement bot, start a second Feishu WebSocket, replace the bot's prompt, or clear/replace its conversation memory.
